@@ -24,13 +24,11 @@ const readString = (options: PluginOptions, key: string): string => {
 
 const runFor = ($: $): ProcessRun => async (argv, opts) => {
   // The hook runtime's $.process.run is a sandboxed IPC channel, not a plain
-  // child_process: a bare executable like edge-tts may not resolve. Try the
-  // argv directly first, then fall back to the Windows shell (cmd /c) with the
-  // whole command as one string — the form that actually runs edge-tts here.
-  // The fallback is Edge-only: the Kokoro helper passes its own paths and must
-  // not be re-jointed through a shell.
+  // child_process: a bare executable like edge-tts or ffplay may not resolve.
+  // Try the argv directly first, then fall back to the Windows shell (cmd /c)
+  // with the whole command as one string — the form that actually runs them.
   let ran = await $.process.run(argv, { timeoutMs: opts?.timeoutMs, stdin: opts?.stdin })
-  if (ran.exitCode !== 0 && argv[0] === 'edge-tts') {
+  if (ran.exitCode !== 0 && (argv[0] === 'edge-tts' || argv[0] === 'ffplay' || argv[0] === 'python')) {
     const shell = await $.process.run(['cmd', '/c', argv.join(' ')], { timeoutMs: opts?.timeoutMs })
     if (shell.exitCode === 0) ran = shell
   }

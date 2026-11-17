@@ -59,6 +59,8 @@ export type PlayResult = { ok: true } | { ok: false; error: string }
 export const playAudio = async (mp3Path: string, run: ProcessRun): Promise<PlayResult> => {
   const ffplay = await findFfmpeg(run)
   if (ffplay === undefined) return { ok: false, error: 'ffplay not found — install ffmpeg (WinGet Gyan FFmpeg)' }
+  // Same sandbox issue as edge-tts: ffplay may not resolve as a bare argv, so
+  // the runFor fallback in hooks/register.ts retries it through cmd /c.
   await run([ffplay, '-autoexit', '-nodisp', '-loglevel', 'error', mp3Path], { timeoutMs: 300_000 })
   return { ok: true }
 }
