@@ -1,0 +1,12 @@
+{
+  "name": "claudespeak-windows",
+  "owner": { "name": "Vkyrie" },
+  "description": "claudespeak-windows: Claude Code replies read aloud on Windows",
+  "plugins": [
+    {
+      "name": "claudespeak-windows",
+      "source": "./",
+      "description": "Reads a 1-3 sentence summary of each finished Claude Code reply aloud on Windows, one voice at a time across sessions. Free Edge TTS default with Kokoro-82M offline fallback; an optional paid API voice if you set a provider and key."
+    }
+  ]
+}
