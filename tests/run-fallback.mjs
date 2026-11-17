@@ -9,9 +9,10 @@ const VOICE = 'tests/kokoro-models/voices-v1.0.bin'
 const OUT = 'tests/kokoro-fallback.mp3'
 
 // A runner that fails the edge-tts call (simulating blocked/offline Edge) and
-// succeeds the python kokoro_fallback call.
+// succeeds the python kokoro_fallback call. Edge is invoked as `cmd /c edge-tts`,
+// so the argv's first element is 'cmd' and the executable is argv[2].
 const failingEdgeRun = async argv => {
-  if (argv[0] === 'edge-tts') {
+  if (argv[0] === 'cmd' && argv[2] === 'edge-tts') {
     return { exitCode: 1, stdout: '', stderr: 'Could not connect to Edge TTS (offline)' }
   }
   return { exitCode: 0, stdout: '', stderr: '' }
@@ -30,7 +31,7 @@ const cases = [
     name: 'Edge succeeds -> no fallback',
     cfg: { voice: '', ttsProvider: '', apiKey: '' },
     text: 'Hello',
-    run: async argv => argv[0] === 'edge-tts'
+    run: async argv => argv[0] === 'cmd' && argv[2] === 'edge-tts'
       ? { exitCode: 0, stdout: '', stderr: '' }
       : { exitCode: 1, stdout: '', stderr: 'should not run' },
     expectOk: true,
