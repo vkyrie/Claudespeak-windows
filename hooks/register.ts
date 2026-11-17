@@ -23,7 +23,18 @@ const readString = (options: PluginOptions, key: string): string => {
 }
 
 const runFor = ($: $): ProcessRun => async (argv, opts) => {
-  const ran = await $.process.run(argv, { timeoutMs: opts?.timeoutMs, stdin: opts?.stdin })
+  // The hook runtime's $.process.run is a sandboxed IPC channel, not a plain
+  // child_process: a bare executable like edge-tts may not resolve. Try the
+  // argv directly first, then fall back to the Windows shell (cmd /c) with the
+  // whole command as one string — the form that actually runs edge-tts here.
+  // The fallback is Edge-only: the Kokoro helper passes its own paths and must
+  // not be re-jointed through a shell.
+  let ran = await $.process.run(argv, { timeoutMs: opts?.timeoutMs, stdin: opts?.stdin })
+  if (ran.exitCode !== 0 && argv[0] === 'edge-tts') {
+    const shell = await $.process.run(['cmd', '/c', argv.join(' ')], { timeoutMs: opts?.timeoutMs })
+    if (shell.exitCode === 0) ran = shell
+  }
+  console.log(`claudespeak: process.run ${JSON.stringify(argv)} -> ${JSON.stringify(ran)}`)
   return { exitCode: ran.exitCode, stdout: ran.stdout, stderr: ran.stderr }
 }
 

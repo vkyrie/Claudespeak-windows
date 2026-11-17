@@ -74,8 +74,7 @@ export const generate = async (
   const edgeTts = process.env.EDGE_TTS_PATH ?? 'edge-tts'
 
   // 1. Try Edge TTS first.
-  // Use cmd /c so the edge-tts CLI works inside the Claude Code hook sandbox.
-  const result = await run(['cmd', '/c', edgeTts, '-v', voice, '--write-media', outPath, '-t', text], { timeoutMs: 120_000 })
+  const result = await run([edgeTts, '-v', voice, '--write-media', outPath, '-t', text], { timeoutMs: 120_000 })
   if (result.exitCode === 0) return { ok: true, path: outPath, provider: 'edge' }
 
   // 2. Edge failed or is blocked -> fall back to Kokoro-82M offline.
@@ -92,7 +91,7 @@ export const generate = async (
     const detail = (fallback.stderr || '').trim().slice(0, 200)
     return {
       ok: false,
-      error: `Edge TTS failed and Kokoro fallback failed: ${detail || fallback.stderr || 'no output'}`,
+      error: `Edge TTS failed and Kokoro fallback failed: ${detail || 'no output'}`,
     }
   }
   return { ok: true, path: outPath, provider: 'kokoro' }
