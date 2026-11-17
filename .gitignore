@@ -1,0 +1,12 @@
+.env
+.DS_Store
+*.log
+.claude-plugin/types/
+.mcpb-cache/
+node_modules/
+dist/
+# Kokoro-82M model downloaded for local testing — 325.5 MB, never commit
+tests/kokoro-models/
+# Generated test audio artifacts
+tests/*.mp3
+tests/*.wav
