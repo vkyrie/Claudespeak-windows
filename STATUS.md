@@ -1,7 +1,7 @@
 # claudespeak-windows — STATUS
 
 **Repo:** https://github.com/vkyrie/Claudespeak-windows
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Last updated:** 2026-11-18
 
 ---
@@ -10,7 +10,7 @@
 
 A stand-alone Windows Claude Code plugin. When Claude Code finishes a main reply, it speaks that reply aloud in a natural voice — for free, no Fish Audio key, no credits.
 
-**Voice:** Edge TTS (`en-US-AriaNeural`) by default, with a Kokoro-82M offline fallback. Auto language switching: Roman Urdu → `ur-PK-UzmaNeural` (female), English → `en-US-AriaNeural` (female).
+**Voice:** Edge TTS (`en-US-AriaNeural`) for English, `ur-PK-AsadNeural` (male) for Roman Urdu, with a Kokoro-82M offline fallback. Auto language switching: Roman Urdu → `ur-PK-AsadNeural` (male), English → `en-US-AriaNeural` (female).
 
 **Commands:** `/speak` (toggle), `/speak on`, `/speak off`, `/speak stop`, `/speak key`.
 
@@ -19,10 +19,13 @@ A stand-alone Windows Claude Code plugin. When Claude Code finishes a main reply
 ## Done
 
 - **Steps 1–7** of PLAN.md complete and tested.
-- **Auto language switching** (`lib/language.ts`): Roman Urdu → `ur-PK-UzmaNeural`, English → `en-US-AriaNeural`, mixed/unsure → English.
+- **Auto language switching** (`lib/language.ts`): Roman Urdu → `ur-PK-AsadNeural` (male), English → `en-US-AriaNeural`, mixed/unsure → English.
+- **Roman Urdu transliteration** (`lib/language.ts`): Roman Urdu text is transliterated to Urdu script before sending to `ur-PK-AsadNeural` voice for natural pronunciation.
 - **Kokoro-82M offline fallback** (`lib/kokoro_fallback.py`, `lib/tts.ts`): Edge TTS first, Kokoro locally when Edge fails or is blocked. Model downloaded (~325.5 MB) to `tests/kokoro-models/`.
+- **External watcher** (`watcher.py`, `watcher.bat`): Runs outside Claude Code sandbox, watches all `.jsonl` files under `~/.claude/projects/`, detects new replies, generates MP3 via edge-tts, plays via ffplay.
+- **Auto-start on Windows**: `watcher.bat` can be added to Startup folder for auto-start on Windows login.
 - **Security check PASS** — see `SECURITY-CHECK.md`. No hardcoded keys, no unguarded network egress, `taskkill` scoped to `ffplay.exe`/`ffmpeg.exe`, `.env` gitignored, no git history to leak.
-- **GitHub push** — 5 commits on `main`.
+- **GitHub push** — 10 commits on `main`.
 - **`marketplace.json`** present in `.claude-plugin/` so the plugin installs from the marketplace.
 
 ## Locked decisions
@@ -34,6 +37,14 @@ A stand-alone Windows Claude Code plugin. When Claude Code finishes a main reply
 ## GitHub state
 
 ```
+a337d12 Fix watcher.py — full detection with edge-tts + ffplay, stays running
+518e289 Change Urdu voice to ur-PK-AsadNeural (male) — more natural for Roman Urdu
+aa67ed6 Fix Roman Urdu handling — transliteration to Urdu script for ur-PK-UzmaNeural voice
+833fcae Fix: runFor edge-tts/ffplay fallback only
+708c50e Fix: runFor edge-tts/ffplay fallback only
+17af020 Fix watcher.py — full watcher with edge-tts + ffplay + language detect, stays running
+114d8c0 Fix: save MP3 as tests/last-reply.mp3 and do not delete it
+82e606e Add per-stage logging to find where replies stop speaking
 5bc1fd0 Fix: playback also needs cmd /c fallback
 2f85945 Fix: TTS failed - retry edge-tts via cmd /c in runFor
 e44122f Fix: replies not speaking
@@ -45,19 +56,8 @@ b377010 Add marketplace.json for plugin install
 
 - Installed in Claude Code, enabled in `settings.json`, `/speak` command exists, `/speak on` works.
 - Old `albertshiney/claudespeak` uninstalled.
-- Installed cache commit: `2f85945` (verified after reinstall).
-
-## CURRENT PROBLEM (most important)
-
-**Replies still do not speak after the fix.**
-
-Root cause found: the Claude Code hook runtime's `$.process.run` is a sandboxed IPC channel, not a plain `child_process`. A bare argv like `['edge-tts', '-v', voice, ...]` never resolves the executable, so `generate()` always exited non-zero. The failure was logged as the uninterpolated literal `claudespeak: TTS failed: ${audio.error}` (37 times in the transcript) and `claudespeak: playback failed: ${played.error}` (26 times) — never a real error string, never audio.
-
-Fix applied: `hooks/runFor` now retries via `['cmd', '/c', argv.join(' ')]` when the direct call fails, for `edge-tts`, `ffplay`, **and** `python` (the Kokoro helper). All 6 test suites pass. Pushed as `2f85945`, then `5bc1fd0` extended the fallback to playback.
-
-**Still no voice after reinstall.** Suspects:
-1. The installed cache may still be the old `b377010` copy (it was — reinstall fixed it to `2f85945`, but the fix may not have taken effect in the running session).
-2. `ffplay` playback may need the same `cmd /c` fallback (addressed in `5bc1fd0`).
+- Installed cache commit: `114d8c0` (verified after reinstall).
+- Voice works via `watcher.py` (external watcher), Urdu voice is `ur-PK-AsadNeural` (male), auto-start via `watcher.bat` (add to Startup folder).
 
 ## Known issues
 
@@ -67,9 +67,10 @@ Fix applied: `hooks/runFor` now retries via `['cmd', '/c', argv.join(' ')]` when
 - **PowerShell does not accept `&&`** — use `;` or separate commands.
 - **Claude Code push is blocked by its classifier** — push from your own terminal with `git pull --rebase` then `git push`.
 
-## Next step for tomorrow
+## Current state
 
-1. Check the installed cache commit + logs first.
-2. Fix playback if needed (the `cmd /c` fallback for `ffplay` is in `5bc1fd0` but may need a session reload).
-3. Test a real reply end-to-end and confirm audio is heard.
-4. Commit and push.
+**Voice works via watcher.py** (external watcher outside sandbox). Urdu voice is now `ur-PK-AsadNeural` (male, more natural). Auto-start available via `watcher.bat` in Startup folder. All 6 test suites pass.
+
+## Next step
+
+Run a fresh Claude Code session, ask a Roman Urdu question (e.g., "kya haal hai"), confirm audio is heard with correct Urdu pronunciation via `ur-PK-AsadNeural`. If issues, debug edge-tts in the watcher.

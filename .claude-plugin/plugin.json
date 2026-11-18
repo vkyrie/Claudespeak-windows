@@ -1,9 +1,9 @@
 {
   "name": "claudespeak-windows",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "claudespeak-windows" },
   "repository": "",
-  "description": "Reads a 1-3 sentence summary of each finished Claude Code reply aloud on Windows, one voice at a time across sessions. Free Edge TTS default with Kokoro-82M offline fallback; an optional paid API voice if you set a provider and key.",
+  "description": "Reads the full reply aloud when Claude Code finishes a main reply. Free Edge TTS default with Kokoro-82M offline fallback; an optional paid API voice if you set a provider and key.",
   "userConfig": {
     "voice": {
       "type": "string",
