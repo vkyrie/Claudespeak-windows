@@ -53,6 +53,193 @@ def detect_language(text: str) -> str:
     return "english"
 
 
+def roman_urdu_to_urdu(text: str) -> str:
+    """Transliterate Roman Urdu to Urdu script for proper TTS pronunciation."""
+    # Common Roman Urdu to Urdu script mappings
+    roman_to_urdu = {
+        "main": "میں",
+        "tum": "تم",
+        "aap": "آپ",
+        "hum": "ہم",
+        "yeh": "یہ",
+        "woh": "وہ",
+        "ye": "یہ",
+        "wo": "وہ",
+        "iska": "اس کا",
+        "mera": "میرا",
+        "tera": "تیرا",
+        "humara": "ہمارا",
+        "tumhara": "تمہارا",
+        "unka": "انکا",
+        "inko": "انکو",
+        "unko": "انکو",
+        "isko": "اسکو",
+        "usko": "اسکو",
+        "hai": "ہے",
+        "hain": "ہیں",
+        "tha": "تھا",
+        "thi": "تھی",
+        "the": "تھے",
+        "hoga": "ہوگا",
+        "hoge": "ہونگے",
+        "kar": "کر",
+        "karna": "کرنا",
+        "kiya": "کیا",
+        "kiye": "کئے",
+        "karta": "کرتا",
+        "karte": "کرتے",
+        "karti": "کرتی",
+        "ho": "ہو",
+        "hona": "ہونا",
+        "hu": "ہوں",
+        "hun": "ہوں",
+        "kuch": "کچھ",
+        "kya": "کیا",
+        "kyun": "کیوں",
+        "kaise": "کیسے",
+        "kahan": "کہاں",
+        "kab": "کب",
+        "kaun": "کون",
+        "kitna": "کتنا",
+        "kitni": "کتنی",
+        "aur": "اور",
+        "lekin": "لیکن",
+        "magar": "مگر",
+        "par": "پر",
+        "to": "تو",
+        "toh": "تو",
+        "agar": "اگر",
+        "phir": "پھر",
+        "abhi": "ابھی",
+        "ab": "اب",
+        "tab": "تب",
+        "jab": "جب",
+        "jaise": "جیسے",
+        "wese": "ویسے",
+        "aise": "ایسے",
+        "waise": "ويسے",
+        "zyada": "زیادہ",
+        "kam": "کم",
+        "bohot": "بہت",
+        "bahut": "بہت",
+        "thora": "تھوڑا",
+        "thodi": "تھوڑی",
+        "bas": "بس",
+        "hi": "ہی",
+        "bhi": "بھی",
+        "nahi": "نہیں",
+        "nahin": "نہیں",
+        "na": "نہ",
+        "ji": "جی",
+        "han": "ہاں",
+        "haan": "ہاں",
+        "ok": "اوکے",
+        "theek": "ٹھیک",
+        "sahi": "سہی",
+        "galat": "غلط",
+        "baat": "بات",
+        "kaam": "کام",
+        "waqt": "وقت",
+        "din": "دن",
+        "raat": "رات",
+        "subah": "صبح",
+        "sham": "شام",
+        "kal": "کل",
+        "aaj": "آج",
+        "pars": "پرسن",
+        "ghar": "گھر",
+        "bahar": "باہر",
+        "andar": "اندر",
+        "upar": "اوپر",
+        "neeche": "نیچے",
+        "paas": "پاس",
+        "door": "دور",
+        "saath": "ساتھ",
+        "bina": "بنا",
+        "pani": "پانی",
+        "khana": "کھانا",
+        "chai": "چائے",
+        "coffee": "کافی",
+        "gadi": "گاڑی",
+        "car": "کار",
+        "bike": "بائیک",
+        "bus": "بس",
+        "train": "ٹرن",
+        "dost": "دوست",
+        "dosts": "دوستوں",
+        "family": "فملی",
+        "maa": "ماں",
+        "baap": "باپ",
+        "bhai": "بھائی",
+        "behen": "بہن",
+        "beta": "بیٹا",
+        "beti": "بیٹی",
+        "paisa": "پیسہ",
+        "rupee": "روپے",
+        "note": "نوٹ",
+        "coin": "سکہ",
+        "bank": "بینک",
+        "atm": "اے ٹی ایم",
+        "card": "کارڈ",
+        "cash": "کیش",
+        "kuch": "کچھ",
+        "b": "ب",
+        "kya": "کیا",
+        "kyun": "کیوں",
+        "kaise": "کیسے",
+        "thoda": "تھوڑا",
+        "thora": "تھوڑا",
+        "bahut": "بہت",
+        "bohot": "بہت",
+        "ab": "اب",
+        "tab": "تب",
+        "jab": "جب",
+        "jaise": "جیسے",
+        "waise": "ويسے",
+        "zyada": "زیادہ",
+        "kam": "کم",
+        "sawan": "ساون",
+        "barish": "بارش",
+        "baarish": "بارش",
+        "par": "پر",
+        "bahut": "بہت",
+        "bohot": "بہت",
+        "rubaru": "رُبرو",
+        "raaz": "راز",
+        "pyaar": "پیار",
+        "dosti": "دوستی",
+        "sach": "سچ",
+        "jhooth": "جھوٹ",
+        "maaf": "معاف",
+        "shukriya": "شکریہ",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+        "iska": "اس کا",
+    }
+
+    # Apply transliteration
+    result = text
+    for roman, urdu in sorted(roman_to_urdu.items(), key=lambda x: -len(x[0])):
+        result = re.sub(r'\b' + re.escape(roman) + r'\b', urdu, result, flags=re.IGNORECASE)
+    return result
+
+
+def should_transliterate(text: str) -> bool:
+    """Check if text is Roman Urdu that needs transliteration."""
+    if not text:
+        return False
+    lang = detect_language(text)
+    return lang == "urdu"
+
+
 def voice_for_language(lang: str) -> str:
     return "ur-PK-UzmaNeural" if lang == "urdu" else "en-US-AriaNeural"
 
@@ -167,9 +354,15 @@ def main():
         lang = detect_language(last_text)
         voice = voice_for_language(lang)
 
+        # If Urdu detected, transliterate Roman Urdu to Urdu script for proper TTS
+        tts_text = last_text
+        if lang == "urdu":
+            tts_text = roman_urdu_to_urdu(last_text)
+            print(f"[transliterate] Roman Urdu -> Urdu script: {tts_text[:50]}...", flush=True)
+
         # Generate MP3 via edge-tts with retry
         out_mp3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests", "last-reply.mp3")
-        if not run_edge_tts(last_text, voice_for_language(lang), out_mp3):
+        if not run_edge_tts(tts_text, voice_for_language(lang), out_mp3):
             print("[error] edge-tts failed after retries", file=sys.stderr)
             time.sleep(1)
             continue
