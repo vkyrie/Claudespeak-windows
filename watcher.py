@@ -241,7 +241,7 @@ def should_transliterate(text: str) -> bool:
 
 
 def voice_for_language(lang: str) -> str:
-    return "ur-PK-UzmaNeural" if lang == "urdu" else "en-US-AriaNeural"
+    return "ur-PK-AsadNeural" if lang == "urdu" else "en-US-AriaNeural"
 
 
 def run_edge_tts(text: str, voice: str, out_mp3: str) -> bool:
