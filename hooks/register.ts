@@ -27,8 +27,10 @@ const runFor = ($: $): ProcessRun => async (argv, opts) => {
   // child_process: a bare executable like edge-tts or ffplay may not resolve.
   // Try the argv directly first, then fall back to the Windows shell (cmd /c)
   // with the whole command as one string — the form that actually runs them.
+  // Python helper must NOT be retried via shell: its args are positional and
+  // joining them into a single string breaks argument parsing.
   let ran = await $.process.run(argv, { timeoutMs: opts?.timeoutMs, stdin: opts?.stdin })
-  if (ran.exitCode !== 0 && (argv[0] === 'edge-tts' || argv[0] === 'ffplay' || argv[0] === 'python')) {
+  if (ran.exitCode !== 0 && (argv[0] === 'edge-tts' || argv[0] === 'ffplay')) {
     const shell = await $.process.run(['cmd', '/c', argv.join(' ')], { timeoutMs: opts?.timeoutMs })
     if (shell.exitCode === 0) ran = shell
   }
