@@ -81,9 +81,10 @@ python watcher.py --session path/to/session.jsonl
 ## Install
 
 1. Open this folder (`claudespeak-windows`) in VS Code.
-2. In Claude Code, run `/plugin install claudespeak-windows` (or add it from the marketplace once published).
+2. In Claude Code, go to **Settings → Plugins → Directory**, add this folder path, then enable the plugin.
+   - **Note:** `/plugin install` command errors with "Unknown skill: plugin" — use Settings → Plugins → Directory instead.
 3. Install ffmpeg and `edge-tts` as above.
-4. Run `/speak on`.
+4. Run `/speak on` to enable voice via the plugin hook.
 
 ---
 

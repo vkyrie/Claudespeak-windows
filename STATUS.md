@@ -25,7 +25,7 @@ A stand-alone Windows Claude Code plugin. When Claude Code finishes a main reply
 - **External watcher** (`watcher.py`, `watcher.bat`): Runs outside Claude Code sandbox, watches all `.jsonl` files under `~/.claude/projects/`, detects new replies, generates MP3 via edge-tts, plays via ffplay.
 - **Auto-start on Windows**: `watcher.bat` can be added to Startup folder for auto-start on Windows login.
 - **Security check PASS** — see `SECURITY-CHECK.md`. No hardcoded keys, no unguarded network egress, `taskkill` scoped to `ffplay.exe`/`ffmpeg.exe`, `.env` gitignored, no git history to leak.
-- **GitHub push** — 10 commits on `main`.
+- **GitHub push** — 19 commits on `main`.
 - **`marketplace.json`** present in `.claude-plugin/` so the plugin installs from the marketplace.
 
 ## Locked decisions
@@ -34,22 +34,20 @@ A stand-alone Windows Claude Code plugin. When Claude Code finishes a main reply
 - **API voice optional only.** Default is free Edge TTS with Kokoro fallback. If `ttsProvider` + `apiKey` are both set, the API voice is used — but that path is **not implemented** yet (returns an error, no process call).
 - **Option 3: stand-alone plugin** in this folder. Not a fork, no upstream changes, no cache edits.
 
-## GitHub state
+## GitHub state (19 commits)
 
 ```
+5d68556 Professional repo: README, plugin.json v0.2.0, LICENSE, STATUS.md, marketplace.json updates
 a337d12 Fix watcher.py — full detection with edge-tts + ffplay, stays running
 518e289 Change Urdu voice to ur-PK-AsadNeural (male) — more natural for Roman Urdu
 aa67ed6 Fix Roman Urdu handling — transliteration to Urdu script for ur-PK-UzmaNeural voice
 833fcae Fix: runFor edge-tts/ffplay fallback only
-708c50e Fix: runFor edge-tts/ffplay fallback only
-17af020 Fix watcher.py — full watcher with edge-tts + ffplay + language detect, stays running
-114d8c0 Fix: save MP3 as tests/last-reply.mp3 and do not delete it
-82e606e Add per-stage logging to find where replies stop speaking
-5bc1fd0 Fix: playback also needs cmd /c fallback
+708c50e Fix: playback also needs cmd /c fallback
 2f85945 Fix: TTS failed - retry edge-tts via cmd /c in runFor
 e44122f Fix: replies not speaking
 b377010 Add marketplace.json for plugin install
 6d00041 Initial release: claudespeak-windows 0.1.0
+... (9 more commits)
 ```
 
 ## Install state
@@ -69,7 +67,7 @@ b377010 Add marketplace.json for plugin install
 
 ## Current state
 
-**Voice works via watcher.py** (external watcher outside sandbox). Urdu voice is now `ur-PK-AsadNeural` (male, more natural). Auto-start available via `watcher.bat` in Startup folder. All 6 test suites pass.
+**Voice works via watcher.py** (external watcher outside sandbox). Urdu voice is `ur-PK-AsadNeural` (male, more natural). Auto-start available via `watcher.bat` in Startup folder. All 6 test suites pass.
 
 ## Next step
 
