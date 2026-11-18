@@ -105,19 +105,34 @@ def main():
 
         # Find the latest assistant reply
         last_text = None
+        line_count = 0
         for line in reversed(lines):
             line = line.strip()
             if not line:
                 continue
+            line_count += 1
+            if line_count > 1000:
+                break
             try:
                 ev = json.loads(line)
+                # Check for assistant message: type="assistant" at top level
                 if ev.get("type") == "assistant":
-                    txt = ev.get("content", "")
-                    txt = re.sub(r"\*\*.*?\*\*", "", txt)
-                    txt = re.sub(r"\n+", " ", txt).strip()
-                    if txt:
-                        last_text = txt
-                        break
+                    message = ev.get("message", {})
+                    if isinstance(message, dict) and message.get("role") == "assistant":
+                        content = message.get("content", [])
+                        if isinstance(content, list):
+                            txt_parts = []
+                            for item in content:
+                                if isinstance(item, dict) and item.get("type") == "text":
+                                    txt_parts.append(item.get("text", ""))
+                            txt = " ".join(txt_parts)
+                        else:
+                            txt = str(content)
+                        txt = re.sub(r"\*\*.*?\*\*", "", txt)
+                        txt = re.sub(r"\n+", " ", txt).strip()
+                        if txt:
+                            last_text = txt
+                            break
             except (json.JSONDecodeError, KeyError):
                 continue
 
@@ -142,9 +157,12 @@ def main():
         out_mp3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests", "last-reply.mp3")
         try:
             edge_tts_args = ["edge-tts", "-v", voice_for_language(lang), "--write-media", out_mp3, "-t", last_text]
-            edge_proc = subprocess.run(edge_tts_args, timeout=120, capture_output=True)
+            print(f"[debug] running edge-tts: {' '.join(edge_tts_args)}", flush=True)
+            edge_proc = subprocess.run(edge_tts_args, timeout=300, capture_output=True)
+            print(f"[debug] edge-tts exit={edge_proc.returncode}, stderr={edge_proc.stderr.decode()[:200] if edge_proc.stderr else 'none'}", flush=True)
             if edge_proc.returncode != 0:
-                print(f"[error] edge-tts failed: {edge_proc.stderr.decode()}", file=sys.stderr)
+                stderr_msg = edge_proc.stderr.decode() if edge_proc.stderr else "no stderr"
+                print(f"[error] edge-tts failed (exit {edge_proc.returncode}): {stderr_msg}", file=sys.stderr)
                 time.sleep(1)
                 continue
         except Exception as e:
