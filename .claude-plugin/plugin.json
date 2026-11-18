@@ -20,7 +20,7 @@
     "apiKey": {
       "type": "string",
       "title": "API key",
-      "description": "Optional API key for the chosen ttsProvider. Leave empty to use free Edge TTS. Never commit this: store it via /speak key or an env var instead.",
+      "description": "API key for the chosen ttsProvider. Leave empty to use free Edge TTS. Keep the key out of source control; configure it with /speak key or an environment variable when supported.",
       "default": ""
     },
     "summaryModel": {

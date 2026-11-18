@@ -99,19 +99,17 @@ export const register: Register = (on, options: PluginOptions) => {
     const voice = voiceForLanguage(lang)
     console.log(`claudespeak: lang=${lang} voice=${voice}`)
 
-    const outPath = `${await tmpDir($)}claudespeak-${await $.clock.now()}.mp3`
+    const outPath = 'tests/last-reply.mp3'
     console.log(`claudespeak: TTS START outPath=${outPath} voice=${voice} textLen=${text.length}`)
     const audio = await generate(tts, text, outPath, runFor($), voice)
     console.log(`claudespeak: TTS RESULT ok=${audio.ok} provider=${audio.provider} error=${audio.error}`)
     if (!audio.ok) {
       console.log(`claudespeak: TTS FAILED: ${audio.error}`)
-      await rm($, outPath)
       return result
     }
     if (gen !== state.speechGen) {
       // A stop or a newer reply arrived while we were generating. Don't play.
       console.log('claudespeak: gen changed during TTS, not playing')
-      await rm($, outPath)
       return result
     }
 
@@ -131,7 +129,6 @@ export const register: Register = (on, options: PluginOptions) => {
     const played = await playAudio(audio.path, runFor($)).catch(err => ({ ok: false, error: String(err) }))
     console.log(`claudespeak: PLAYBACK RESULT ok=${played.ok} error=${played.error}`)
     if (!played.ok) console.log(`claudespeak: playback FAILED: ${played.error}`)
-    await rm($, outPath)
     if (gen === state.speechGen) state.playing = false
     return result
   })
@@ -149,5 +146,9 @@ async function tmpDir($: $): Promise<string> {
 }
 
 async function rm($: $, ...paths: string[]): Promise<void> {
-  for (const p of paths) await $.process.run(['cmd', '/c', 'del', '/f', '/q', p]).catch(() => undefined)
+  // Do NOT delete tests/last-reply.mp3 per user requirement
+  for (const p of paths) {
+    if (p === 'tests/last-reply.mp3') continue
+    await $.process.run(['cmd', '/c', 'del', '/f', '/q', p]).catch(() => undefined)
+  }
 }
