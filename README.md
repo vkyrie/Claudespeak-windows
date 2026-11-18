@@ -1,10 +1,25 @@
 # claudespeak-windows
 
-A stand-alone Windows version of [ClaudeSpeak](https://github.com/albertshiney/claudespeak) for **Claude Code on Windows 11 + VS Code**.
+A stand-alone **ClaudeSpeak Windows** version of [ClaudeSpeak](https://github.com/albertshiney/claudespeak) for **Claude Code on Windows 11 + VS Code** — adds **Claude Code speech** and **Claude Code text to speech** to your terminal.
 
-When Claude Code finishes a main reply, this plugin **reads the full reply aloud** in a natural, real-sounding voice — for free, with no Fish Audio key and no credits.
+When Claude Code finishes a main reply, this plugin **reads the full reply aloud** in a natural, real-sounding **Claude Code voice** — for free, with no Fish Audio key and no credits.
 
 **Voice:** Edge TTS (`en-US-AriaNeural`) for English, `ur-PK-AsadNeural` (male) for Roman Urdu, with a Kokoro-82M offline fallback. Auto language switching: Roman Urdu → `ur-PK-AsadNeural` (male), English → `en-US-AriaNeural`.
+
+**Windows TTS for Claude Code** that works outside the sandbox via an external watcher.
+
+---
+
+## Features
+
+- **Claude Code speech** — Reads full replies aloud, not just summaries
+- **Claude Code text to speech** via Microsoft Edge TTS (free, no API key)
+- **ClaudeSpeak Windows** native experience with auto language detection
+- **Claude Code voice** selection: `en-US-AriaNeural` (English), `ur-PK-AsadNeural` (Roman Urdu male)
+- **Windows TTS for Claude Code** via external watcher — runs outside sandbox, no sandbox issues
+- **ClaudeSpeak Windows** auto-start via `watcher.bat` in Startup folder
+- **Claude Code voice** auto-detects Roman Urdu vs English, transliterates Roman Urdu to Urdu script for native pronunciation
+- Free, no API keys, no credits — runs locally on Windows
 
 ---
 
