@@ -34,7 +34,7 @@ const runFor = ($: $): ProcessRun => async (argv, opts) => {
     const shell = await $.process.run(['cmd', '/c', argv.join(' ')], { timeoutMs: opts?.timeoutMs })
     if (shell.exitCode === 0) ran = shell
   }
-  console.log(`claudespeak: process.run ${JSON.stringify(argv)} -> ${JSON.stringify(ran)}`)
+  console.log(`claudespeak: process.run argv=${JSON.stringify(argv)} -> exitCode=${ran.exitCode} stdout=${(ran.stdout||'').slice(0,80)} stderr=${(ran.stderr||'').slice(0,80)}`)
   return { exitCode: ran.exitCode, stdout: ran.stdout, stderr: ran.stderr }
 }
 
@@ -49,6 +49,7 @@ export const register: Register = (on, options: PluginOptions) => {
 
   // A new prompt means the person has moved on: cut the old reply's speech.
   on('prompt.submit', ($, _e, next) => {
+    console.log('claudespeak: prompt.submit -> stopSpeech')
     stopSpeech(runFor($), state)
     return next()
   })
@@ -74,45 +75,69 @@ export const register: Register = (on, options: PluginOptions) => {
     const result = await next(e)
     // Only the main agent's answer, never a sub-agent, tool continuation, or empty reply.
     const isMainAnswer = e.agentId === undefined && e.reason === 'answer' && e.answer.trim() !== ''
-    if (!isMainAnswer) return result
+    if (!isMainAnswer) {
+      console.log(`claudespeak: turn.complete skipped (agentId=${e.agentId}, reason=${e.reason}, answerLen=${e.answer?.length})`)
+      return result
+    }
+
+    console.log(`claudespeak: turn.complete FIRED (answerLen=${e.answer.length})`)
 
     // One voice at a time: a new reply stops the old voice first.
     stopSpeech(runFor($), state)
     const gen = state.speechGen
 
+    console.log('claudespeak: summarizing reply...')
     const text = await summarize(e.answer, summaryModel, async opts => $.model.complete(opts))
-    if (text.trim() === '' || gen !== state.speechGen) return result
+    console.log(`claudespeak: summary done (len=${text.length})`)
+    if (text.trim() === '' || gen !== state.speechGen) {
+      console.log(`claudespeak: skipped (empty summary=${text.trim()===''} or genChanged=${gen!==state.speechGen})`)
+      return result
+    }
 
     // Auto-detect language and pick the voice for this reply.
     const lang = detectLanguage(e.answer)
     const voice = voiceForLanguage(lang)
+    console.log(`claudespeak: lang=${lang} voice=${voice}`)
 
     const outPath = `${await tmpDir($)}claudespeak-${await $.clock.now()}.mp3`
+    console.log(`claudespeak: TTS START outPath=${outPath} voice=${voice} textLen=${text.length}`)
     const audio = await generate(tts, text, outPath, runFor($), voice)
+    console.log(`claudespeak: TTS RESULT ok=${audio.ok} provider=${audio.provider} error=${audio.error}`)
     if (!audio.ok) {
-      console.log(`claudespeak: TTS failed: ${audio.error}`)
+      console.log(`claudespeak: TTS FAILED: ${audio.error}`)
       await rm($, outPath)
       return result
     }
     if (gen !== state.speechGen) {
       // A stop or a newer reply arrived while we were generating. Don't play.
+      console.log('claudespeak: gen changed during TTS, not playing')
       await rm($, outPath)
       return result
     }
+
+    // Check MP3 file
+    const mp3Exists = await $.fs.exists(outPath).catch(() => false)
+    console.log(`claudespeak: MP3 exists=${mp3Exists} path=${outPath}`)
+    if (mp3Exists) {
+      const stat = await $.fs.stat(outPath).catch(() => null)
+      if (stat) console.log(`claudespeak: MP3 size=${stat.size} bytes`)
+    }
+
     state.playing = true
-    console.log(
-      `claudespeak: turn.complete (${e.answer.length} chars, lang=${lang}, voice=${voice}) -> ${audio.provider} audio (${text.length} chars text) -> ${outPath}`,
-    )
+    console.log(`claudespeak: turn.complete (answerLen=${e.answer.length}, lang=${lang}, voice=${voice}) -> ${audio.provider} audio (${text.length} chars text) -> ${outPath}`)
     // Play until the clip ends or something cuts it. A newer reply or /speak stop
     // bumps speechGen and kills ffplay by image name, which ends this call.
+    console.log('claudespeak: PLAYBACK START')
     const played = await playAudio(audio.path, runFor($)).catch(err => ({ ok: false, error: String(err) }))
-    if (!played.ok) console.log(`claudespeak: playback failed: ${played.error}`)
+    console.log(`claudespeak: PLAYBACK RESULT ok=${played.ok} error=${played.error}`)
+    if (!played.ok) console.log(`claudespeak: playback FAILED: ${played.error}`)
     await rm($, outPath)
     if (gen === state.speechGen) state.playing = false
     return result
   })
 
   on('session.end', ($, _e, next) => {
+    console.log('claudespeak: session.end -> stopSpeech')
     stopSpeech(runFor($), state)
     return next()
   })
