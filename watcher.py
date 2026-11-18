@@ -57,7 +57,25 @@ def voice_for_language(lang: str) -> str:
     return "ur-PK-UzmaNeural" if lang == "urdu" else "en-US-AriaNeural"
 
 
-# ------------------------------------------------------------------ main loop
+def run_edge_tts(text: str, voice: str, out_mp3: str) -> bool:
+    """Run edge-tts with retry logic for sandbox issues."""
+    edge_tts_args = ["edge-tts", "-v", voice, "--write-media", out_mp3, "-t", text]
+    for attempt in range(5):
+        print(f"[debug] running edge-tts (attempt {attempt+1}): {' '.join(edge_tts_args)}", flush=True)
+        try:
+            edge_proc = subprocess.run(edge_tts_args, timeout=300, capture_output=True)
+            if edge_proc.returncode == 0 and os.path.exists(out_mp3) and os.path.getsize(out_mp3) > 0:
+                print(f"[debug] edge-tts exit=0, file_size={os.path.getsize(out_mp3)}", flush=True)
+                return True
+            stderr_msg = edge_proc.stderr.decode() if edge_proc.stderr else "no stderr"
+            print(f"[debug] edge-tts attempt {attempt+1} failed (exit {edge_proc.returncode}): {stderr_msg[:200]}", file=sys.stderr, flush=True)
+            time.sleep(1 * (attempt + 1))
+        except Exception as e:
+            print(f"[debug] edge-tts attempt {attempt+1} exception: {e}", file=sys.stderr, flush=True)
+            time.sleep(1 * (attempt + 1))
+    return False
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="claudespeak watcher")
@@ -105,14 +123,10 @@ def main():
 
         # Find the latest assistant reply
         last_text = None
-        line_count = 0
         for line in reversed(lines):
             line = line.strip()
             if not line:
                 continue
-            line_count += 1
-            if line_count > 1000:
-                break
             try:
                 ev = json.loads(line)
                 # Check for assistant message: type="assistant" at top level
@@ -153,20 +167,10 @@ def main():
         lang = detect_language(last_text)
         voice = voice_for_language(lang)
 
-        # Generate MP3 via edge-tts
+        # Generate MP3 via edge-tts with retry
         out_mp3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests", "last-reply.mp3")
-        try:
-            edge_tts_args = ["edge-tts", "-v", voice_for_language(lang), "--write-media", out_mp3, "-t", last_text]
-            print(f"[debug] running edge-tts: {' '.join(edge_tts_args)}", flush=True)
-            edge_proc = subprocess.run(edge_tts_args, timeout=300, capture_output=True)
-            print(f"[debug] edge-tts exit={edge_proc.returncode}, stderr={edge_proc.stderr.decode()[:200] if edge_proc.stderr else 'none'}", flush=True)
-            if edge_proc.returncode != 0:
-                stderr_msg = edge_proc.stderr.decode() if edge_proc.stderr else "no stderr"
-                print(f"[error] edge-tts failed (exit {edge_proc.returncode}): {stderr_msg}", file=sys.stderr)
-                time.sleep(1)
-                continue
-        except Exception as e:
-            print(f"[error] edge-tts failed: {e}", file=sys.stderr)
+        if not run_edge_tts(last_text, voice_for_language(lang), out_mp3):
+            print("[error] edge-tts failed after retries", file=sys.stderr)
             time.sleep(1)
             continue
 
